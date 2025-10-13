@@ -340,7 +340,6 @@ public class ObituaryController : Controller
 
 
     [HttpGet]
-    [Authorize]
     [Route("Obituary/Search")]
 
     public async Task<IActionResult> Search(string? name)
