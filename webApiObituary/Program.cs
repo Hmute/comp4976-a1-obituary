@@ -22,6 +22,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add service defaults & Aspire components.
+builder.AddServiceDefaults();
 
 var app = builder.Build();
 
@@ -50,7 +52,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-    
+
 app.MapIdentityApi<IdentityUser>();
 
 app.MapRazorPages()

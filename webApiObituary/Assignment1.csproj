@@ -29,4 +29,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\comp4976-a1-obituary.ServiceDefaults\comp4976-a1-obituary.ServiceDefaults.csproj" />
+  </ItemGroup>
+
 </Project>
