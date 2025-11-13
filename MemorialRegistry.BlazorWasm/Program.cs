@@ -51,6 +51,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseA
 // ========================================================
 builder.Services.AddScoped<ObituaryApiService>();    // 📡 API communication layer
 builder.Services.AddScoped<AuthService>();           // 🔐 Authentication management
+// 🔧 Debug configuration handled via static class
 
 // AUTHENTICATION SETUP: JWT-based client-side authentication
 // ===========================================================
