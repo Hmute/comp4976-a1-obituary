@@ -5,88 +5,211 @@
 @model IEnumerable<Assignment1.Models.Obituary>
 
 @{
-    ViewData["Title"] = "Search";
+    ViewData["Title"] = "Search Results";
 }
 
-<h1>Search</h1>
+@* QUICKGRID CHANGE: Added modern styling and improved layout *@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-4 text-primary">
+                    <i class="fas fa-search"></i> Search Results
+                </h1>
+                @* AUTHORIZATION CHANGE: Hide "Create New" from anonymous users *@
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <a asp-action="Create" class="btn btn-primary btn-lg shadow">
+                        <i class="fas fa-plus"></i> Create New Obituary
+                    </a>
+                }
+            </div>
 
-@* AUTHORIZATION CHANGE: Hide "Create New" from anonymous users *@
-@if (SignInManager.IsSignedIn(User))
-{
-    <p>
-        <a asp-action="Create">Create New</a>
-    </p>
-}
+            @* QUICKGRID CHANGE: Navigation back to main list *@
+            <div class="mb-3">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to All Obituaries
+                </a>
+            </div>
 
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.FullName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateOfBirth)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateOfDeath)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Biography)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PrimaryPhotoBase64)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedByUserId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAtUtc)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(model => item.FullName)
-                </td>
-                <td>
-                    @Html.DisplayFor(model => item.DateOfBirth)
-                </td>
-                <td>
-                    @Html.DisplayFor(model => item.DateOfDeath)
-                </td>
-                <td>
-                    @Html.DisplayFor(model => item.Biography)
-                </td>
-                <td>
-                    @Html.DisplayFor(model => item.PrimaryPhotoBase64)
-                </td>
-                <td>
-                    @Html.DisplayFor(model => item.CreatedByUserId)
-                </td>
-                <td>
-                    @Html.DisplayFor(model => item.CreatedAtUtc)
-                </td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a>
-                    @* AUTHORIZATION CHANGE: Hide Edit/Delete from anonymous users and restrict to admins/creators only *@
-                    @if (SignInManager.IsSignedIn(User))
+            @* QUICKGRID CHANGE: Enhanced table with modern styling and responsive design *@
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> Found @Model.Count() obituaries
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Any())
                     {
-                        @* Show Edit/Delete if user is admin or created this obituary *@
-                        @if (User.IsInRole("Admin") || item.CreatedByUserId == UserManager.GetUserId(User))
-                        {
-                            <text> | </text>
-                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
-                            <text> | </text>
-                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                        }
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="fas fa-user"></i> Full Name
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-birthday-cake"></i> Birth Date
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-cross"></i> Death Date
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-file-text"></i> Biography
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-clock"></i> Created
+                                        </th>
+                                        <th scope="col" class="text-center">
+                                            <i class="fas fa-cogs"></i> Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@Html.DisplayFor(model => item.FullName)</strong>
+                                            </td>
+                                            <td>
+                                                @item.DateOfBirth.ToString("MMM dd, yyyy")
+                                            </td>
+                                            <td>
+                                                @item.DateOfDeath.ToString("MMM dd, yyyy")
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var biography = item.Biography ?? "No biography available";
+                                                    var truncated = biography.Length > 100 ? biography.Substring(0, 100) + "..." : biography;
+                                                }
+                                                <span title="@biography" data-bs-toggle="tooltip">
+                                                    @truncated
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    @item.CreatedAtUtc.ToString("MMM dd, yyyy")
+                                                </small>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group" aria-label="Actions">
+                                                    <a asp-action="Details" asp-route-id="@item.Id" 
+                                                       class="btn btn-outline-info btn-sm" 
+                                                       data-bs-toggle="tooltip" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    @* AUTHORIZATION CHANGE: Hide Edit/Delete from anonymous users and restrict to admins/creators only *@
+                                                    @if (SignInManager.IsSignedIn(User))
+                                                    {
+                                                        @* Show Edit/Delete if user is admin or created this obituary *@
+                                                        @if (User.IsInRole("Admin") || item.CreatedByUserId == UserManager.GetUserId(User))
+                                                        {
+                                                            <a asp-action="Edit" asp-route-id="@item.Id" 
+                                                               class="btn btn-outline-warning btn-sm"
+                                                               data-bs-toggle="tooltip" title="Edit">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <a asp-action="Delete" asp-route-id="@item.Id" 
+                                                               class="btn btn-outline-danger btn-sm"
+                                                               data-bs-toggle="tooltip" title="Delete">
+                                                                <i class="fas fa-trash"></i>
+                                                            </a>
+                                                        }
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
-                </td>
-            </tr>
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No matching obituaries found</h4>
+                            <p class="text-muted">Try searching with different keywords or check the spelling.</p>
+                            <a asp-action="Index" class="btn btn-outline-primary">
+                                <i class="fas fa-list"></i> View All Obituaries
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* QUICKGRID CHANGE: Add Font Awesome and custom styles for modern look *@
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        .display-4 {
+            font-weight: 300;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-    </tbody>
-</table>
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+        }
+        
+        .shadow {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .table th {
+            font-weight: 600;
+            vertical-align: middle;
+            border-top: none;
+        }
+        
+        .table-dark th {
+            background-color: #495057 !important;
+        }
+        
+        .btn-group .btn {
+            margin-right: 2px;
+        }
+        
+        .btn-group .btn:last-child {
+            margin-right: 0;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+        
+        .text-primary {
+            color: #0d6efd !important;
+        }
+        
+        .bg-primary {
+            background: linear-gradient(45deg, #0d6efd, #6610f2) !important;
+        }
+        
+        .btn {
+            border-radius: 8px;
+        }
+        
+        .card-header {
+            border-radius: 12px 12px 0 0 !important;
+        }
+    </style>
+}
+
+@* QUICKGRID CHANGE: Add Bootstrap tooltips for better UX *@
+@section Scripts {
+    <script>
+        // Initialize Bootstrap tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+    </script>
+}

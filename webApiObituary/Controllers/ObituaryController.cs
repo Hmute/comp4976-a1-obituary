@@ -17,9 +17,11 @@ public class ObituaryController : Controller
         _context = context;
     }
 
+    // QUICKGRID CHANGE: Updated Index to return materialized list for MVC view compatibility  
     // GET: OBITUARYS
     public async Task<IActionResult> Index()
     {
+        // Return materialized list for MVC view
         return View(await _context.Obituaries.ToListAsync());
     }
 
@@ -361,14 +363,18 @@ public class ObituaryController : Controller
         return _context.Obituaries.Any(e => e.Id == id);
     }
 
+    // AUTHORIZATION HELPER: Determines if current user can modify an obituary
+    // Implements ownership-based permissions and admin role access
     private bool CanModifyObituary(Obituary obituary)
     {
         var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var isAdmin = User.IsInRole("Admin");
 
+        // Allow modification if user is admin OR the creator of the obituary
         return isAdmin || obituary.CreatedByUserId == currentUserId;
     }
 
+    // AUTHORIZATION HELPER: Async version for checking modification permissions by ID
     private async Task<bool> CanModifyObituaryAsync(int obituaryId)
     {
         var obituary = await _context.Obituaries.FindAsync(obituaryId);

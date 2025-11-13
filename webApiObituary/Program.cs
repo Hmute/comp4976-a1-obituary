@@ -19,6 +19,10 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
+// UI ENHANCEMENT: Add QuickGrid services for modern data grid functionality
+// Provides pagination, sorting, and enhanced styling capabilities for obituary listings
+builder.Services.AddQuickGridEntityFrameworkAdapter();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -48,6 +52,8 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
+// ROUTING CHANGE: Changed default controller from Home to Obituary
+// This ensures the application starts with the main obituary listing page
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Obituary}/{action=Index}/{id?}")
