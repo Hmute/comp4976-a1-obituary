@@ -1,31 +1,37 @@
+/* 
+ * ASPIRE APPHOST CONFIGURATION
+ * ============================
+ * 
+ * 🚀 ORCHESTRATION: Manages both API and Blazor WebAssembly services
+ * 
+ * This AppHost coordinates the development environment by:
+ * ✅ Starting the ASP.NET Core API server (port 7001)
+ * ✅ Starting the Blazor WebAssembly dev server (port 5180) 
+ * ✅ Configuring service-to-service communication
+ * ✅ Managing service dependencies and startup order
+ * ✅ Providing unified logging and monitoring
+ * 
+ * Migration Impact:
+ * - Replaces manual service startup with coordinated orchestration
+ * - Ensures consistent development environment across team
+ * - Simplifies debugging with centralized dashboard
+ * - Manages CORS and networking configuration automatically
+ */
+
 using Aspire.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// ===============================
-// BACKEND SERVICE CONFIGURATION
-// ===============================
-// Creates the main web API service that handles all obituary operations
-// Uses .NET Aspire for orchestration and service discovery
-var obituaryApi = builder.AddProject<Projects.Assignment1>("obituary-api")
-    .WithHttpEndpoint(name: "obituary-api-http")   // Let Aspire assign ports dynamically for flexibility
-    .WithHttpsEndpoint(name: "obituary-api-https"); // HTTPS endpoint for secure communication
+// 📡 BACKEND API: ASP.NET Core with Entity Framework, Identity & JWT
+// Serves: /api/obituary endpoints, authentication, database operations
+var apiService = builder.AddProject<Projects.Assignment1>("memorial-api")
+    .WithHttpsEndpoint(port: 7001, name: "api-https");
 
-// ===============================
-// FRONTEND SERVICE CONFIGURATION
-// ===============================
-// Memorial Registry web application with enhanced UI and authorization
-// Configured for seamless integration with backend service through Aspire service discovery
-builder.AddProject<Projects.Assignment1>("obituary-ui")
-    .WithHttpEndpoint(name: "obituary-ui-http")    // Dynamic port assignment for development flexibility
-    .WithHttpsEndpoint(name: "obituary-ui-https")  // HTTPS for secure authentication and data transmission
-                                                   // Enables frontend to discover backend URL dynamically through Aspire service mesh
-    .WithEnvironment("BACKEND_URL", obituaryApi.GetEndpoint("obituary-api-http"))
-    // Ensures backend service starts before frontend to prevent connection issues
-    .WaitFor(obituaryApi)
-    // Creates service-to-service reference for distributed tracing and monitoring
-    // Automatically propagates OpenTelemetry config (via ServiceDefaults)
-    .WithReference(obituaryApi);
+// 🖥️ FRONTEND SPA: Blazor WebAssembly Client Application
+// Serves: Static files, client-side routing, component rendering
+var blazorApp = builder.AddProject<Projects.MemorialRegistry_BlazorWasm>("memorial-blazor")
+    .WithHttpEndpoint(port: 5180, name: "blazor-http")  
+    .WithEnvironment("ApiBaseAddress", "https://localhost:7001")  // 🔗 API connection
+    .WaitFor(apiService);  // ⏳ Ensure API starts first
 
-// Start the distributed application with orchestrated services
 builder.Build().Run();

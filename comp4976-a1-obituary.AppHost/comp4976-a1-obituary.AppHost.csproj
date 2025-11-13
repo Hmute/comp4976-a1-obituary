@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\webApiObituary\Assignment1.csproj" />
+    <ProjectReference Include="..\MemorialRegistry.BlazorWasm\MemorialRegistry.BlazorWasm.csproj" />
   </ItemGroup>
 
 </Project>
