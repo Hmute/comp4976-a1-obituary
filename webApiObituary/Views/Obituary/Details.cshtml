@@ -1,3 +1,7 @@
+@* AUTHORIZATION CHANGE: Added Identity services to check user authentication status *@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
 @model Assignment1.Models.Obituary
 
 @{
@@ -10,57 +14,63 @@
     <h4>Obituary</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.FullName)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.FullName)
         </dd>
     </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateOfBirth)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateOfBirth)
-        </dd>
+    <dt class="col-sm-2">
+        @Html.DisplayNameFor(model => model.DateOfBirth)
+    </dt>
+    <dd class="col-sm-10">
+        @Html.DisplayFor(model => model.DateOfBirth)
+    </dd>
     </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateOfDeath)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateOfDeath)
-        </dd>
+    <dt class="col-sm-2">
+        @Html.DisplayNameFor(model => model.DateOfDeath)
+    </dt>
+    <dd class="col-sm-10">
+        @Html.DisplayFor(model => model.DateOfDeath)
+    </dd>
     </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Biography)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Biography)
-        </dd>
+    <dt class="col-sm-2">
+        @Html.DisplayNameFor(model => model.Biography)
+    </dt>
+    <dd class="col-sm-10">
+        @Html.DisplayFor(model => model.Biography)
+    </dd>
     </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PrimaryPhotoBase64)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PrimaryPhotoBase64)
-        </dd>
+    <dt class="col-sm-2">
+        @Html.DisplayNameFor(model => model.PrimaryPhotoBase64)
+    </dt>
+    <dd class="col-sm-10">
+        @Html.DisplayFor(model => model.PrimaryPhotoBase64)
+    </dd>
     </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedByUserId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedByUserId)
-        </dd>
+    <dt class="col-sm-2">
+        @Html.DisplayNameFor(model => model.CreatedByUserId)
+    </dt>
+    <dd class="col-sm-10">
+        @Html.DisplayFor(model => model.CreatedByUserId)
+    </dd>
     </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAtUtc)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAtUtc)
-        </dd>
+    <dt class="col-sm-2">
+        @Html.DisplayNameFor(model => model.CreatedAtUtc)
+    </dt>
+    <dd class="col-sm-10">
+        @Html.DisplayFor(model => model.CreatedAtUtc)
+    </dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    @* AUTHORIZATION CHANGE: Hide Edit link from anonymous users and restrict to admins/creators only *@
+    @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || Model.CreatedByUserId ==
+        UserManager.GetUserId(User)))
+    {
+        <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a>
+        <text> | </text>
+    }
     <a asp-action="Index">Back to List</a>
 </div>

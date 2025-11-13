@@ -13,11 +13,13 @@ public class HomeController : Controller
         _logger = logger;
     }
 
+    // AUTHORIZATION CHANGE: Redirect Home/Index to Obituary/Index instead of trying to load non-existent view
     public IActionResult Index()
     {
         return RedirectToAction("Index", "Obituary");
     }
 
+    // AUTHORIZATION CHANGE: Redirect Home/Privacy to Obituary/Index instead of trying to load non-existent view
     public IActionResult Privacy()
     {
         return RedirectToAction("Index", "Obituary");

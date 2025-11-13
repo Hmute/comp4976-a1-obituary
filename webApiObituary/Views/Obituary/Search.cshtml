@@ -1,4 +1,7 @@
-
+@* AUTHORIZATION CHANGE: Added Identity services to check user authentication status *@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
 @model IEnumerable<Assignment1.Models.Obituary>
 
 @{
@@ -7,9 +10,13 @@
 
 <h1>Search</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+@* AUTHORIZATION CHANGE: Hide "Create New" from anonymous users *@
+@if (SignInManager.IsSignedIn(User))
+{
+    <p>
+        <a asp-action="Create">Create New</a>
+    </p>
+}
 
 
 <table class="table">
@@ -40,35 +47,46 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.FullName)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.DateOfBirth)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.DateOfDeath)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Biography)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.PrimaryPhotoBase64)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.CreatedByUserId)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.CreatedAtUtc)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(model => item.FullName)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.DateOfBirth)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.DateOfDeath)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.Biography)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.PrimaryPhotoBase64)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.CreatedByUserId)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.CreatedAtUtc)
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                    @* AUTHORIZATION CHANGE: Hide Edit/Delete from anonymous users and restrict to admins/creators only *@
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        @* Show Edit/Delete if user is admin or created this obituary *@
+                        @if (User.IsInRole("Admin") || item.CreatedByUserId == UserManager.GetUserId(User))
+                        {
+                            <text> | </text>
+                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                            <text> | </text>
+                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                        }
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
