@@ -1,0 +1,56 @@
+﻿<ErrorBoundary>
+    <ChildContent>
+        <CascadingAuthenticationState>
+            <Router AppAssembly="@typeof(App).Assembly">
+                <Found Context="routeData">
+                    <ErrorBoundary>
+                        <ChildContent>
+                            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Components.Layout.MainLayout)">
+                                <NotAuthorized>
+                                    <h3>Access Denied</h3>
+                                    <p>You must be logged in to view this page.</p>
+                                    <a href="/login">Login</a>
+                                </NotAuthorized>
+                            </AuthorizeRouteView>
+                            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+                        </ChildContent>
+                        <ErrorContent Context="exception">
+                            <div class="alert alert-danger m-3">
+                                <h4>Page Error</h4>
+                                <p>An error occurred while loading this page.</p>
+                                <details class="mt-2">
+                                    <summary>Error Details</summary>
+                                    <pre class="mt-2">@exception.ToString()</pre>
+                                </details>
+                                <button class="btn btn-primary mt-2" @onclick="() => NavigationManager.Refresh(true)">Reload Page</button>
+                            </div>
+                        </ErrorContent>
+                    </ErrorBoundary>
+                </Found>
+                <NotFound>
+                    <PageTitle>Not found</PageTitle>
+                    <LayoutView Layout="@typeof(Components.Layout.MainLayout)">
+                        <div class="alert alert-warning m-3">
+                            <h4>Page Not Found</h4>
+                            <p role="alert">Sorry, there's nothing at this address.</p>
+                            <a href="/" class="btn btn-primary">Go Home</a>
+                        </div>
+                    </LayoutView>
+                </NotFound>
+            </Router>
+        </CascadingAuthenticationState>
+    </ChildContent>
+    <ErrorContent Context="exception">
+        <div class="alert alert-danger m-3">
+            <h4>Application Error</h4>
+            <p>A critical error occurred in the application.</p>
+            <details class="mt-2">
+                <summary>Error Details</summary>
+                <pre class="mt-2">@exception.ToString()</pre>
+            </details>
+            <button class="btn btn-primary mt-2" onclick="window.location.reload()">Reload Application</button>
+        </div>
+    </ErrorContent>
+</ErrorBoundary>
+
+@inject NavigationManager NavigationManager

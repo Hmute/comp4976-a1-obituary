@@ -1,0 +1,217 @@
+@page "/details/{Id:int}"
+@inject ObituaryApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>@pageTitle - Memorial Registry</PageTitle>
+
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading obituary details...</p>
+    </div>
+}
+else if (obituary == null)
+{
+    <div class="text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+        <h4 class="text-muted">Obituary Not Found</h4>
+        <p class="text-muted">The requested obituary could not be found.</p>
+        <a href="/" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Obituaries
+        </a>
+    </div>
+}
+else
+{
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h1 class="display-5 text-primary mb-2">
+                            <i class="fas fa-user-circle me-2"></i>@obituary.FullName
+                        </h1>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            @obituary.DateOfBirth.ToString("MMMM dd, yyyy") - @obituary.DateOfDeath.ToString("MMMM dd, yyyy")
+                        </p>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <AuthorizeView>
+                            <Authorized>
+                                <a href="/edit/@obituary.Id" class="btn btn-outline-warning">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <button class="btn btn-outline-danger" @onclick="DeleteObituary">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </Authorized>
+                        </AuthorizeView>
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="row">
+                    <!-- Photo Section -->
+                    @if (!string.IsNullOrEmpty(obituary.PrimaryPhotoBase64))
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <img src="@obituary.PrimaryPhotoBase64" alt="@obituary.FullName" 
+                                         class="img-fluid rounded" style="max-height: 400px;" />
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Biography Section -->
+                    <div class="@(string.IsNullOrEmpty(obituary.PrimaryPhotoBase64) ? "col-12" : "col-md-8") mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-book-open me-2"></i>In Memory Of @obituary.FullName
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="biography-content">
+                                    @foreach (var paragraph in obituary.Biography.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                                    {
+                                        <p class="mb-3">@paragraph</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Info -->
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>Life Details
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-5">Born:</dt>
+                                    <dd class="col-sm-7">
+                                        <i class="fas fa-birthday-cake text-success me-1"></i>
+                                        @obituary.DateOfBirth.ToString("MMMM dd, yyyy")
+                                    </dd>
+                                    <dt class="col-sm-5">Passed Away:</dt>
+                                    <dd class="col-sm-7">
+                                        <i class="fas fa-cross text-danger me-1"></i>
+                                        @obituary.DateOfDeath.ToString("MMMM dd, yyyy")
+                                    </dd>
+                                    <dt class="col-sm-5">Age at Passing:</dt>
+                                    <dd class="col-sm-7">
+                                        <i class="fas fa-clock text-info me-1"></i>
+                                        @CalculateAge() years old
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-clock me-2"></i>Memorial Details
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-5">Created:</dt>
+                                    <dd class="col-sm-7">
+                                        <i class="fas fa-calendar-plus text-primary me-1"></i>
+                                        @obituary.CreatedAtUtc.ToString("MMMM dd, yyyy")
+                                    </dd>
+                                    <dt class="col-sm-5">Memorial ID:</dt>
+                                    <dd class="col-sm-7">
+                                        <i class="fas fa-hashtag text-muted me-1"></i>
+                                        #@obituary.Id.ToString("D4")
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    
+    private Obituary? obituary;
+    private bool isLoading = true;
+    private string pageTitle = "Loading...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadObituaryAsync();
+    }
+
+    private async Task LoadObituaryAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            obituary = await ApiService.GetObituaryAsync(Id);
+            pageTitle = obituary?.FullName ?? "Not Found";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading obituary: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteObituary()
+    {
+        if (obituary == null) return;
+
+        // Simple confirmation - in production, use a proper modal
+        try
+        {
+            await ApiService.DeleteObituaryAsync(obituary.Id);
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting obituary: {ex.Message}");
+        }
+    }
+
+    private int CalculateAge()
+    {
+        if (obituary == null) return 0;
+        
+        var birth = obituary.DateOfBirth;
+        var death = obituary.DateOfDeath;
+        
+        var age = death.Year - birth.Year;
+        if (death < birth.AddYears(age))
+            age--;
+            
+        return age;
+    }
+}

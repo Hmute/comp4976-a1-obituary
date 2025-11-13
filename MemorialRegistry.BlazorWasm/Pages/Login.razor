@@ -1,0 +1,125 @@
+@page "/login"
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Sign In - Memorial Registry</PageTitle>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-5 col-md-7">
+            <div class="card shadow-lg border-0 rounded-lg mt-5">
+                <div class="card-header">
+                    <div class="text-center">
+                        <i class="fas fa-heart text-danger mb-2" style="font-size: 2rem;"></i>
+                        <h3 class="font-weight-light">Memorial Registry</h3>
+                        <p class="text-muted">Sign in to your account</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@loginModel" OnValidSubmit="@HandleLoginAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger mb-3" />
+                        
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                @errorMessage
+                            </div>
+                        }
+                        
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="loginModel.Email" class="form-control" placeholder="name@example.com" />
+                            <label>
+                                <i class="fas fa-envelope me-1"></i>Email Address
+                            </label>
+                            <ValidationMessage For="@(() => loginModel.Email)" class="text-danger" />
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="password" />
+                            <label>
+                                <i class="fas fa-lock me-1"></i>Password
+                            </label>
+                            <ValidationMessage For="@(() => loginModel.Password)" class="text-danger" />
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                }
+                                <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+                
+                <div class="card-footer text-center py-3">
+                    <div class="small">
+                        <p class="mb-0">
+                            Don't have an account? 
+                            <a href="/register" class="text-decoration-none">
+                                <i class="fas fa-user-plus me-1"></i>Create account
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginRequest loginModel = new();
+    private bool isLoading = false;
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if already authenticated
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleLoginAsync()
+    {
+        isLoading = true;
+        errorMessage = "";
+        StateHasChanged();
+
+        try
+        {
+            var result = await AuthService.LoginAsync(loginModel);
+            
+            if (result != null)
+            {
+                if (AuthenticationStateProvider is CustomAuthenticationStateProvider customProvider)
+                {
+                    await customProvider.NotifyAuthenticationStateChangedAsync();
+                }
+                
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "Invalid email or password. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred during login. Please try again.";
+            Console.WriteLine($"Login error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,143 @@
+@page "/register"
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Create Account - Memorial Registry</PageTitle>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-lg border-0 rounded-lg mt-5">
+                <div class="card-header">
+                    <div class="text-center">
+                        <i class="fas fa-heart text-danger mb-2" style="font-size: 2rem;"></i>
+                        <h3 class="font-weight-light">Memorial Registry</h3>
+                        <p class="text-muted">Create your account</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@registerModel" OnValidSubmit="@HandleRegisterAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger mb-3" />
+                        
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                @errorMessage
+                            </div>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(successMessage))
+                        {
+                            <div class="alert alert-success" role="alert">
+                                <i class="fas fa-check-circle me-1"></i>
+                                @successMessage
+                            </div>
+                        }
+                        
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="registerModel.Email" class="form-control" placeholder="name@example.com" />
+                            <label>
+                                <i class="fas fa-envelope me-1"></i>Email Address
+                            </label>
+                            <ValidationMessage For="@(() => registerModel.Email)" class="text-danger" />
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="registerModel.Password" type="password" class="form-control" placeholder="password" />
+                            <label>
+                                <i class="fas fa-lock me-1"></i>Password
+                            </label>
+                            <ValidationMessage For="@(() => registerModel.Password)" class="text-danger" />
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="form-control" placeholder="password" />
+                            <label>
+                                <i class="fas fa-check me-1"></i>Confirm Password
+                            </label>
+                            <ValidationMessage For="@(() => registerModel.ConfirmPassword)" class="text-danger" />
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg" disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                }
+                                <i class="fas fa-user-plus me-1"></i>Create Account
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+                
+                <div class="card-footer text-center py-3">
+                    <div class="small">
+                        <p class="mb-0">
+                            Already have an account? 
+                            <a href="/login" class="text-decoration-none">
+                                <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterRequest registerModel = new();
+    private bool isLoading = false;
+    private string errorMessage = "";
+    private string successMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if already authenticated
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleRegisterAsync()
+    {
+        isLoading = true;
+        errorMessage = "";
+        successMessage = "";
+        StateHasChanged();
+
+        try
+        {
+            var result = await AuthService.RegisterAsync(registerModel);
+            
+            if (result)
+            {
+                successMessage = "Account created successfully! You can now sign in.";
+                registerModel = new(); // Clear form
+                
+                // Optionally auto-redirect to login after a delay
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                errorMessage = "Failed to create account. Email may already be in use.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred during registration. Please try again.";
+            Console.WriteLine($"Registration error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}
