@@ -343,7 +343,6 @@ public class ObituaryController : Controller
 
     [HttpGet]
     [Route("Obituary/Search")]
-
     public async Task<IActionResult> Search(string? name)
     {
         if (string.IsNullOrEmpty(name))
@@ -354,6 +353,22 @@ public class ObituaryController : Controller
         var obituaries = await _context.Obituaries.Where(obit => obit.FullName.ToLower().Contains(name.ToLower())).ToListAsync();
 
         return View(obituaries);
+    }
+
+    // GET: api/obituary/search (API endpoint for Blazor)
+    [HttpGet("api/obituary/search")]
+    public async Task<ActionResult<List<Obituary>>> SearchObituaries(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return await _context.Obituaries.ToListAsync();
+        }
+
+        var obituaries = await _context.Obituaries
+            .Where(obit => obit.FullName.ToLower().Contains(name.ToLower()))
+            .ToListAsync();
+
+        return Ok(obituaries);
     }
 
 
