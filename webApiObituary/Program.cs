@@ -73,9 +73,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllersWithViews();
 
-// UI ENHANCEMENT: Add QuickGrid services for modern data grid functionality
-// Provides pagination, sorting, and enhanced styling capabilities for obituary listings
-builder.Services.AddQuickGridEntityFrameworkAdapter();
+// MIGRATION NOTE: QuickGrid removed - now handled by Blazor WebAssembly client
+// Data grid functionality moved to client-side Blazor components
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
