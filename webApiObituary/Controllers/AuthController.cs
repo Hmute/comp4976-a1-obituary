@@ -14,15 +14,18 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _configuration;
 
     public AuthController(
         UserManager<IdentityUser> userManager,
         SignInManager<IdentityUser> signInManager,
+        RoleManager<IdentityRole> roleManager,
         IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _roleManager = roleManager;
         _configuration = configuration;
     }
 
@@ -83,6 +86,8 @@ public class AuthController : ControllerBase
         {
             return BadRequest(new { message = "Registration failed", errors = result.Errors });
         }
+
+        await _userManager.AddToRoleAsync(user, "User");
 
         return Ok(new { message = "User created successfully" });
     }
