@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -22,24 +21,23 @@ jobs:
         with:
           dotnet-version: '9.x'
 
-      # 🚀 Restore only the backend API
+      # ✔ Restore backend API (correct path)
       - name: Restore backend API
-        run: dotnet restore ./webApiObituary/Assignment1/Assignment1.csproj
+        run: dotnet restore ./webApiObituary/Assignment1.csproj
 
-      # 🚀 Build only the backend API
+      # ✔ Build backend API (correct path)
       - name: Build backend API
-        run: dotnet build ./webApiObituary/Assignment1/Assignment1.csproj --configuration Release --no-restore
+        run: dotnet build ./webApiObituary/Assignment1.csproj --configuration Release --no-restore
 
-      # 🚀 Publish only the backend API
+      # ✔ Publish backend API (correct path)
       - name: Publish backend API
-        run: dotnet publish ./webApiObituary/Assignment1/Assignment1.csproj -c Release -o ./published-api
+        run: dotnet publish ./webApiObituary/Assignment1.csproj -c Release -o ./published-api
 
       - name: Upload publish artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-api
           path: ./published-api
-
 
   deploy:
     runs-on: ubuntu-latest
