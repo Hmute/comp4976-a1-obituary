@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP.Net Core app to Azure Web App - obituary-backend-api
+name: Deploy Backend API to Azure Web App
 
 on:
   push:
@@ -10,44 +7,53 @@ on:
   workflow_dispatch:
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: Setup .NET 9
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.x'
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      # 🚀 Restore only the backend API
+      - name: Restore backend API
+        run: dotnet restore ./webApiObituary/Assignment1/Assignment1.csproj
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      # 🚀 Build only the backend API
+      - name: Build backend API
+        run: dotnet build ./webApiObituary/Assignment1/Assignment1.csproj --configuration Release --no-restore
 
-      - name: Upload artifact for deployment job
+      # 🚀 Publish only the backend API
+      - name: Publish backend API
+        run: dotnet publish ./webApiObituary/Assignment1/Assignment1.csproj -c Release -o ./published-api
+
+      - name: Upload publish artifact
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          name: backend-api
+          path: ./published-api
+
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
-      
+          name: backend-api
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -56,10 +62,8 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_31BBAA75CC9E45ECBB31D2B4C2B60876 }}
 
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'obituary-backend-api'
           slot-name: 'Production'
           package: .
-          
