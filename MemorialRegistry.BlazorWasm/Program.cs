@@ -29,9 +29,17 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // ===============================================================
 // The Blazor WebAssembly app needs to know where the API server is running.
 // In development: Uses Aspire orchestration or fallback to localhost:7001
-// In production: Should be configured via appsettings or environment variables
+// In production: Uses Azure App Service URL
 
-var apiBaseAddress = builder.Configuration.GetValue<string>("ApiBaseAddress") ?? "https://localhost:7001";
+// 🌐 AZURE DEPLOYMENT: Primary API endpoint
+var azureApiUrl = "https://obituary-assigment1-eeb9f4cehfaze9gg.canadacentral-01.azurewebsites.net";
+
+// 🔧 Development fallback for local testing
+var developmentApiUrl = "https://localhost:7001";
+
+// Auto-detect environment and choose appropriate API URL
+var apiBaseAddress = builder.HostEnvironment.IsProduction() ? azureApiUrl :
+    (builder.Configuration.GetValue<string>("ApiBaseAddress") ?? developmentApiUrl);
 Console.WriteLine($"🔗 API Base Address from configuration: {apiBaseAddress}");
 Console.WriteLine($"📋 All configuration keys: {string.Join(", ", builder.Configuration.AsEnumerable().Select(c => $"{c.Key}={c.Value}"))}");
 
@@ -83,4 +91,5 @@ await builder.Build().RunAsync();
  * 🚀 Improved user experience (SPA navigation)
  * 🚀 Better scalability (stateless API)
  * 🚀 Offline capabilities (PWA potential)
- */;
+ */
+;

@@ -57,11 +57,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("BlazorWasmPolicy", policy =>
     {
-        // 🛡️ DEVELOPMENT: Allow any localhost origin (Aspire assigns dynamic ports)
-        policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+        // 🌐 AZURE PRODUCTION: Static Web App domain
+        policy.WithOrigins("https://red-dune-0446b1110.6.azurestaticapps.net")
               .AllowAnyMethod()     // ✅ GET, POST, PUT, DELETE, etc.
               .AllowAnyHeader()     // ✅ Authorization, Content-Type, etc.
               .AllowCredentials();  // ✅ JWT tokens, authentication cookies
+
+        // 🛡️ DEVELOPMENT: Allow any localhost origin (Aspire assigns dynamic ports)
+        policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -82,7 +88,7 @@ builder.Services.AddSwaggerGen(c =>
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-    
+
     c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
