@@ -102,9 +102,25 @@
                         <!-- Biography -->
                         <div class="row mt-4">
                             <div class="col-12">
-                                <h6 class="text-muted mb-3">
-                                    <i class="fas fa-book-open me-1"></i>Biography / Tribute
-                                </h6>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="text-muted mb-0">
+                                        <i class="fas fa-book-open me-1"></i>Biography / Tribute
+                                    </h6>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            @onclick="GenerateBiographyAsync" 
+                                            disabled="@isGenerating">
+                                        @if (isGenerating)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            <span>Generating...</span>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-magic me-1"></i>
+                                            <span>Generate Full Biography</span>
+                                        }
+                                    </button>
+                                </div>
                                 
                                 <div class="form-floating">
                                     <InputTextArea @bind-Value="obituaryModel.Biography" class="form-control" 
@@ -112,7 +128,7 @@
                                     <label>Biography / Tribute Text</label>
                                     <ValidationMessage For="@(() => obituaryModel.Biography)" class="text-danger" />
                                 </div>
-                                <small class="text-muted">Share memories, achievements, and what made this person special.</small>
+                                <small class="text-muted">Share memories, achievements, and what made this person special. Or enter key points and click "Generate Full Biography".</small>
                             </div>
                         </div>
 
@@ -145,7 +161,60 @@
     private DateTime birthDate = DateTime.Today.AddYears(-70);
     private DateTime deathDate = DateTime.Today;
     private bool isLoading = false;
+    private bool isGenerating = false;
     private string errorMessage = "";
+
+    private async Task GenerateBiographyAsync()
+    {
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(obituaryModel.FullName))
+        {
+            errorMessage = "Please enter the full name before generating biography.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(obituaryModel.Biography))
+        {
+            errorMessage = "Please enter some key points in the biography field before generating.";
+            return;
+        }
+
+        isGenerating = true;
+        errorMessage = "";
+        StateHasChanged();
+
+        try
+        {
+            var request = new GenerateBiographyRequest
+            {
+                FullName = obituaryModel.FullName,
+                DateOfBirth = DateOnly.FromDateTime(birthDate),
+                DateOfDeath = DateOnly.FromDateTime(deathDate),
+                Biography = obituaryModel.Biography
+            };
+
+            var response = await ApiService.GenerateBiographyAsync(request);
+
+            if (response.Success)
+            {
+                obituaryModel.Biography = response.GeneratedBiography;
+            }
+            else
+            {
+                errorMessage = response.ErrorMessage ?? "Failed to generate biography. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred while generating biography. Please try again.";
+            Console.WriteLine($"Generate biography error: {ex.Message}");
+        }
+        finally
+        {
+            isGenerating = false;
+            StateHasChanged();
+        }
+    }
 
     private async Task HandleCreateAsync()
     {

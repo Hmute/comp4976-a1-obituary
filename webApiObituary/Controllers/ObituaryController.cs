@@ -6,16 +6,19 @@ using Assignment1.Data;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using MemorialRegistry.Shared.DTOs;
+using Assignment1.Services;
 
 
 public class ObituaryController : Controller
 {
     private const string BearerScheme = "Identity.Bearer";
     private readonly ApplicationDbContext _context;
+    private readonly AzureOpenAIService _openAIService;
 
-    public ObituaryController(ApplicationDbContext context)
+    public ObituaryController(ApplicationDbContext context, AzureOpenAIService openAIService)
     {
         _context = context;
+        _openAIService = openAIService;
     }
 
     // QUICKGRID CHANGE: Updated Index to return materialized list for MVC view compatibility  
@@ -149,6 +152,25 @@ public class ObituaryController : Controller
         _context.Add(obituary);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetObituaryDetails), new { id = obituary.Id }, obituary);
+    }
+
+    // POST: api/obituary/generate-biography
+    [HttpPost("/api/obituary/generate-biography")]
+    public async Task<ActionResult<GenerateBiographyResponse>> GenerateBiography([FromBody] GenerateBiographyRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var response = await _openAIService.GenerateBiographyAsync(request);
+
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+
+        return Ok(response);
     }
 
 

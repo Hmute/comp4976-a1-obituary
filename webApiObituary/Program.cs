@@ -76,6 +76,9 @@ builder.Services.AddControllersWithViews();
 // MIGRATION NOTE: QuickGrid removed - now handled by Blazor WebAssembly client
 // Data grid functionality moved to client-side Blazor components
 
+// Add HttpClient and Azure OpenAI Service
+builder.Services.AddHttpClient<Assignment1.Services.AzureOpenAIService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

@@ -69,15 +69,15 @@ public class ObituaryApiService
             var response = await _httpClient.GetAsync($"/api/obituary/all?page={page}&pageSize={pageSize}");
             Console.WriteLine($"📋 Response Status: {response.StatusCode}");
             response.EnsureSuccessStatusCode();
-            
+
             var json = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Response JSON: {json}");
-            
+
             // The API returns { data: [...], pagination: {...} }
             // We need to map this to our PaginatedResponse format
             var result = JsonSerializer.Deserialize<ApiResponse>(json, _jsonOptions);
             Console.WriteLine($"Deserialized result: Data count = {result?.Data?.Count}, Pagination = {result?.Pagination?.CurrentPage}/{result?.Pagination?.TotalPages}");
-            
+
             var paginatedResponse = new PaginatedResponse<Obituary>
             {
                 Data = result?.Data ?? new List<Obituary>(),
@@ -91,7 +91,7 @@ public class ObituaryApiService
                     HasPrevious = result?.Pagination?.HasPreviousPage ?? false
                 }
             };
-            
+
             Console.WriteLine($"Returning {paginatedResponse.Data.Count} obituaries from API");
             return paginatedResponse;
         }
@@ -137,7 +137,7 @@ public class ObituaryApiService
         await SetAuthorizationHeaderAsync();
         var response = await _httpClient.PostAsJsonAsync("/api/obituary", obituary, _jsonOptions);
         response.EnsureSuccessStatusCode();
-        
+
         var json = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<Obituary>(json, _jsonOptions)!;
     }
@@ -160,8 +160,30 @@ public class ObituaryApiService
     {
         var response = await _httpClient.GetAsync($"/api/obituary/search?name={Uri.EscapeDataString(name)}");
         response.EnsureSuccessStatusCode();
-        
+
         var json = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<List<Obituary>>(json, _jsonOptions) ?? new List<Obituary>();
+    }
+
+    public async Task<GenerateBiographyResponse> GenerateBiographyAsync(GenerateBiographyRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/obituary/generate-biography", request, _jsonOptions);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<GenerateBiographyResponse>(json, _jsonOptions)
+                ?? new GenerateBiographyResponse { Success = false, ErrorMessage = "Failed to deserialize response" };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error generating biography: {ex.Message}");
+            return new GenerateBiographyResponse
+            {
+                Success = false,
+                ErrorMessage = $"Failed to generate biography: {ex.Message}"
+            };
+        }
     }
 }
