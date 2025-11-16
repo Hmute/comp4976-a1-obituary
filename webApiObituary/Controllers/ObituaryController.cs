@@ -5,6 +5,7 @@ using Assignment1.Models;
 using Assignment1.Data;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using MemorialRegistry.Shared.DTOs;
 
 
 public class ObituaryController : Controller
@@ -124,22 +125,30 @@ public class ObituaryController : Controller
         return View(obituary);
     }
 
-
-    [Authorize(AuthenticationSchemes = BearerScheme)]
+    // POST: api/obituary
+    [Authorize]
     [HttpPost("/api/obituary")]
-    public async Task<ActionResult<Obituary>> CreateObituary([FromBody] Obituary obituary)
+    public async Task<ActionResult<Obituary>> CreateObituary([FromBody] CreateObituaryRequest request)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            // Set the creator's user ID
-            obituary.CreatedByUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
-            obituary.CreatedAtUtc = DateTime.UtcNow;
-
-            _context.Add(obituary);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetObituaryDetails), new { id = obituary.Id }, obituary);
+            return BadRequest(ModelState);
         }
-        return BadRequest(ModelState);
+
+        var obituary = new Obituary
+        {
+            FullName = request.FullName,
+            DateOfBirth = request.DateOfBirth,
+            DateOfDeath = request.DateOfDeath,
+            Biography = request.Biography,
+            PrimaryPhotoBase64 = request.PrimaryPhotoBase64,
+            CreatedByUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "",
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        _context.Add(obituary);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetObituaryDetails), new { id = obituary.Id }, obituary);
     }
 
 
@@ -219,9 +228,9 @@ public class ObituaryController : Controller
 
 
     // PUT: api/obituary/{id}
-    [Authorize(AuthenticationSchemes = BearerScheme)]
+    [Authorize]
     [HttpPut("/api/obituary/{id}")]
-    public async Task<IActionResult> UpdateObituary(int id, [FromBody] Obituary obituary)
+    public async Task<IActionResult> UpdateObituary(int id, [FromBody] UpdateObituaryRequest request)
     {
         // Check authorization
         if (!await CanModifyObituaryAsync(id))
@@ -234,17 +243,20 @@ public class ObituaryController : Controller
             return BadRequest(ModelState);
         }
 
-        // Preserve original creator info
-        var existingObituary = await _context.Obituaries.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id);
+        // Get existing obituary to preserve creator info
+        var existingObituary = await _context.Obituaries.FirstOrDefaultAsync(o => o.Id == id);
         if (existingObituary == null)
         {
             return NotFound();
         }
 
-        obituary.CreatedByUserId = existingObituary.CreatedByUserId;
-        obituary.CreatedAtUtc = existingObituary.CreatedAtUtc;
-
-        _context.Entry(obituary).State = EntityState.Modified;
+        // Update fields from request
+        existingObituary.FullName = request.FullName;
+        existingObituary.DateOfBirth = request.DateOfBirth;
+        existingObituary.DateOfDeath = request.DateOfDeath;
+        existingObituary.Biography = request.Biography;
+        existingObituary.PrimaryPhotoBase64 = request.PrimaryPhotoBase64;
+        // CreatedByUserId and CreatedAtUtc are preserved automatically
 
         try
         {
@@ -252,7 +264,7 @@ public class ObituaryController : Controller
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!ObituaryExists(obituary.Id))
+            if (!ObituaryExists(id))
             {
                 return NotFound();
             }
@@ -267,7 +279,7 @@ public class ObituaryController : Controller
 
 
     // DELETE: api/obituary/{id}
-    [Authorize(AuthenticationSchemes = BearerScheme)]
+    [Authorize]
     [HttpDelete("/api/obituary/{id}")]
     public async Task<IActionResult> DeleteObituary(int id)
     {
