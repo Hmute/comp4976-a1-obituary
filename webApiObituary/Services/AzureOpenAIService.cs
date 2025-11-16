@@ -8,13 +8,13 @@ namespace Assignment1.Services;
 public class AzureOpenAIService
 {
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
+    private readonly AzureOpenAIOptions _options;
     private readonly ILogger<AzureOpenAIService> _logger;
 
-    public AzureOpenAIService(HttpClient httpClient, IConfiguration configuration, ILogger<AzureOpenAIService> logger)
+    public AzureOpenAIService(HttpClient httpClient, AzureOpenAIOptions options, ILogger<AzureOpenAIService> logger)
     {
         _httpClient = httpClient;
-        _configuration = configuration;
+        _options = options;
         _logger = logger;
     }
 
@@ -22,23 +22,7 @@ public class AzureOpenAIService
     {
         try
         {
-            var endpoint = _configuration["AzureOpenAI:Endpoint"];
-            var apiKey = _configuration["AzureOpenAI:ApiKey"];
-            var apiVersion = _configuration["AzureOpenAI:ApiVersion"];
-            var model = _configuration["AzureOpenAI:Model"];
-            var maxTokens = int.Parse(_configuration["AzureOpenAI:MaxTokens"] ?? "40000");
-
-            if (string.IsNullOrEmpty(endpoint) || string.IsNullOrEmpty(apiKey))
-            {
-                _logger.LogError("Azure OpenAI configuration is missing");
-                return new GenerateBiographyResponse
-                {
-                    Success = false,
-                    ErrorMessage = "Azure OpenAI service is not configured"
-                };
-            }
-
-            var fullUrl = $"{endpoint}?api-version={apiVersion}";
+            var fullUrl = $"{_options.Endpoint}?api-version={_options.ApiVersion}";
 
             var prompt = $@"Help me create a full, detailed obituary biography based on this information:
 
@@ -47,43 +31,38 @@ Date of Birth: {request.DateOfBirth:MMMM d, yyyy}
 Date of Death: {request.DateOfDeath:MMMM d, yyyy}
 Key Points: {request.Biography}
 
-Please expand these key points into a complete, touching, and respectful biography that honors their life and legacy.
-The result should be within 200 words.";
+Please expand these points into a respectful ~200 word obituary biography.";
 
-            var requestBody = new
+            var payload = new
             {
                 messages = new[]
                 {
-                    new
-                    {
-                        role = "user",
-                        content = prompt
-                    }
+                    new { role = "user", content = prompt }
                 },
-                max_completion_tokens = maxTokens,
-                model = model
+                max_completion_tokens = _options.MaxTokens,
+                model = _options.Model
             };
 
-            var jsonContent = JsonSerializer.Serialize(requestBody);
-            var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-
-            var response = await _httpClient.PostAsync(fullUrl, httpContent);
-            var responseContent = await response.Content.ReadAsStringAsync();
+            var response = await _httpClient.PostAsync(fullUrl, content);
+            var body = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Azure OpenAI API error: {response.StatusCode} - {responseContent}");
+                _logger.LogError("Azure OpenAI Error {Status}: {Body}", response.StatusCode, body);
+
                 return new GenerateBiographyResponse
                 {
                     Success = false,
-                    ErrorMessage = $"API error: {response.StatusCode}"
+                    ErrorMessage = $"Azure OpenAI error: {response.StatusCode}"
                 };
             }
 
-            var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
-            var generatedText = result
+            var result = JsonSerializer.Deserialize<JsonElement>(body);
+
+            var generated = result
                 .GetProperty("choices")[0]
                 .GetProperty("message")
                 .GetProperty("content")
@@ -92,16 +71,17 @@ The result should be within 200 words.";
             return new GenerateBiographyResponse
             {
                 Success = true,
-                GeneratedBiography = generatedText ?? string.Empty
+                GeneratedBiography = generated ?? ""
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating biography with Azure OpenAI");
+            _logger.LogError(ex, "OpenAI request failure");
+
             return new GenerateBiographyResponse
             {
                 Success = false,
-                ErrorMessage = $"An error occurred: {ex.Message}"
+                ErrorMessage = ex.Message
             };
         }
     }
