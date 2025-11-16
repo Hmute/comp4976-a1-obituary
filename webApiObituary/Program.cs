@@ -77,6 +77,9 @@ builder.Services.AddControllersWithViews();
 // Provides pagination, sorting, and enhanced styling capabilities for obituary listings
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
+// Add HttpClient and Azure OpenAI Service
+builder.Services.AddHttpClient<Assignment1.Services.AzureOpenAIService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

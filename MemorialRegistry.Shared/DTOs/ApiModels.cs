@@ -88,3 +88,27 @@ public class AuthResponse
     public string Email { get; set; } = null!;
     public DateTime Expires { get; set; }
 }
+
+public class GenerateBiographyRequest
+{
+    [Required(ErrorMessage = "Full name is required")]
+    [StringLength(200, ErrorMessage = "Full name cannot exceed 200 characters")]
+    public string FullName { get; set; } = null!;
+
+    [Required(ErrorMessage = "Date of birth is required")]
+    public DateOnly DateOfBirth { get; set; }
+
+    [Required(ErrorMessage = "Date of death is required")]
+    public DateOnly DateOfDeath { get; set; }
+
+    [Required(ErrorMessage = "Biography is required")]
+    [StringLength(1000, ErrorMessage = "Biography cannot exceed 1000 characters")]
+    public string Biography { get; set; } = null!;
+}
+
+public class GenerateBiographyResponse
+{
+    public string GeneratedBiography { get; set; } = null!;
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+}
