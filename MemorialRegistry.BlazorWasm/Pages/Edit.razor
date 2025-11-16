@@ -152,6 +152,9 @@ else
                                         </button>
                                     </div>
 
+                                    <small class="text-muted">Share memories, achievements, and what made this person
+                                    special. Or enter key points and click "Generate Full Biography".</small>
+
                                     <div class="form-floating">
                                         <InputTextArea @bind-Value="obituaryModel.Biography" class="form-control"
                                             style="height: 200px;"
@@ -159,8 +162,6 @@ else
                                         <label>Biography / Tribute Text</label>
                                         <ValidationMessage For="@(() => obituaryModel.Biography)" class="text-danger" />
                                     </div>
-                                    <small class="text-muted">Share memories, achievements, and what made this person
-                                        special. Or enter key points and click "Generate Full Biography".</small>
                                 </div>
                             </div>
 
