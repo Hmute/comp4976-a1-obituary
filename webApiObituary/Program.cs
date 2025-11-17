@@ -145,4 +145,11 @@ app.MapControllerRoute(
 app.MapIdentityApi<IdentityUser>();
 app.MapRazorPages().WithStaticAssets();
 
+// RUN MIGRATIONS IN PRODUCTION
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
 app.Run();
