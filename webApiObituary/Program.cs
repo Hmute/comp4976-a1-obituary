@@ -155,28 +155,40 @@ app.MapControllerRoute(
 app.MapIdentityApi<IdentityUser>();
 app.MapRazorPages().WithStaticAssets();
 
-// RUN MIGRATIONS IN PRODUCTION
-try
+// RUN MIGRATIONS IN PRODUCTION (with timeout protection)
+_ = Task.Run(async () =>
 {
-    using (var scope = app.Services.CreateScope())
+    try
     {
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        await Task.Delay(1000); // Give the app a moment to start
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-        logger.LogInformation("Applying database migrations...");
-        db.Database.Migrate();
-        logger.LogInformation("Database migrations completed successfully.");
+            logger.LogInformation("Starting database migrations in background...");
 
-        // Ensure database is created and accessible
-        var canConnect = db.Database.CanConnect();
-        logger.LogInformation($"Database connection test: {(canConnect ? "SUCCESS" : "FAILED")}");
+            // Apply migrations with timeout protection
+            using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
+            {
+                await db.Database.MigrateAsync(cts.Token);
+            }
+
+            logger.LogInformation("Database migrations completed successfully.");
+
+            // Test connection
+            var canConnect = await db.Database.CanConnectAsync();
+            logger.LogInformation($"Database connection test: {(canConnect ? "SUCCESS" : "FAILED")}");
+        }
     }
-}
-catch (Exception ex)
-{
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "An error occurred while applying database migrations.");
-    // Don't throw - let the app start even if migrations fail
-}
+    catch (Exception ex)
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "Database migration failed: {Message}", ex.Message);
+        }
+    }
+});
 
 app.Run();
