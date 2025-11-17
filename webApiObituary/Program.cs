@@ -64,7 +64,9 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
             "http://localhost:5180",                                // Local Blazor WASM (HTTP)
-            "https://localhost:5180",                               // Local Blazor WASM (HTTPS)
+            "https://localhost:5180",                               // Local Blazor WASM (HTTPS)  
+            "http://localhost:7259",                                // Local Blazor WASM (HTTP alt)
+            "https://localhost:7259",                               // Local Blazor WASM (HTTPS alt)
             "https://red-dune-0446b1110.6.azurestaticapps.net"      // Azure SWA
         )
         .AllowAnyMethod()

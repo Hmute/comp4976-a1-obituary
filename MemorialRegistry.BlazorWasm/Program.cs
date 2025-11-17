@@ -52,6 +52,32 @@ if (!string.IsNullOrEmpty(aspireEndpoint))
     apiBaseAddress = aspireEndpoint;
     Console.WriteLine($"🚀 Aspire endpoint detected. Using: {apiBaseAddress}");
 }
+else
+{
+    // Manual mode: Check if HTTPS API is available, fallback to HTTP
+    Console.WriteLine($"🔧 Manual mode. Testing API availability...");
+
+    // Try HTTPS first (default), then HTTP fallback
+    var httpsUrl = "https://localhost:7001";
+    var httpUrl = "http://localhost:5000";
+
+    try
+    {
+        using var client = new HttpClient();
+        client.Timeout = TimeSpan.FromSeconds(2);
+        var response = await client.GetAsync($"{httpsUrl}/api/obituary/all");
+        if (response.IsSuccessStatusCode)
+        {
+            apiBaseAddress = httpsUrl;
+            Console.WriteLine($"✅ HTTPS API available: {apiBaseAddress}");
+        }
+    }
+    catch
+    {
+        apiBaseAddress = httpUrl;
+        Console.WriteLine($"⚠️ HTTPS unavailable, using HTTP: {apiBaseAddress}");
+    }
+}
 
 /* 
 ========================================
