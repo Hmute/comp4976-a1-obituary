@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Assignment1.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -127,6 +128,15 @@ else
     app.UseHsts();
 }
 
+// Fix HTTPS redirect for Azure App Service
+if (!app.Environment.IsDevelopment())
+{
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+    });
+}
+
 app.UseHttpsRedirection();
 
 app.UseCors("BlazorClient");
@@ -146,10 +156,27 @@ app.MapIdentityApi<IdentityUser>();
 app.MapRazorPages().WithStaticAssets();
 
 // RUN MIGRATIONS IN PRODUCTION
-using (var scope = app.Services.CreateScope())
+try
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        logger.LogInformation("Applying database migrations...");
+        db.Database.Migrate();
+        logger.LogInformation("Database migrations completed successfully.");
+
+        // Ensure database is created and accessible
+        var canConnect = db.Database.CanConnect();
+        logger.LogInformation($"Database connection test: {(canConnect ? "SUCCESS" : "FAILED")}");
+    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while applying database migrations.");
+    // Don't throw - let the app start even if migrations fail
 }
 
 app.Run();
